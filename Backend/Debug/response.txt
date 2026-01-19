@@ -1,0 +1,343 @@
+<search path="/Users/agnos/Downloads/AGNOS/AGEditor_2/V2/TEST/snake_game.py">
+<content>
+   30 | 
+   31 | class Snake:
+   32 |     [41mdef[0m __init__(self):
+   33 |         self.body = [(GRID_WIDTH // 2, GRID_HEIGHT // 2)]
+   34 |         self.direction = RIGHT
+   35 |         self.grow = False
+   36 | 
+   37 |     [41mdef[0m move(self):
+   38 |         head_x, head_y = self.body[0]
+   39 |         new_head = (head_x + self.direction[0], head_y + self.direction[1])
+  ...
+   57 |         return True
+   58 | 
+   59 |     [41mdef[0m change_direction(self, new_direction):
+   60 |         # Prevent reversing into self
+   61 |         if (self.direction[0] * -1, self.direction[1] * -1) != new_direction:
+   62 |             self.direction = new_direction
+   63 | 
+   64 |     [41mdef[0m grow_[42msnake[0m(self):
+   65 |         self.grow = True
+   66 | 
+   67 |     [41mdef[0m check_food_collision(self, food):
+   68 |         return self.body[0] == food
+   69 | 
+   70 |     [41mdef[0m draw(self, screen):
+   71 |         for i, segment in enumerate(self.body):
+   72 |             x = segment[0] * GRID_SIZE
+  ...
+   80 | 
+   81 | class Food:
+   82 |     [41mdef[0m __init__(self):
+   83 |         self.position = self.generate_position()
+   84 | 
+   85 |     [41mdef[0m generate_position(self):
+   86 |         return (random.randint(0, GRID_WIDTH - 1), random.randint(0, GRID_HEIGHT - 1))
+   87 | 
+   88 |     [41mdef[0m respawn(self, [42msnake[0m_body):
+   89 |         self.position = self.generate_position()
+   90 |         while self.position in [42msnake[0m_body:
+   91 |             self.position = self.generate_position()
+   92 | 
+   93 |     [41mdef[0m draw(self, screen):
+   94 |         x = self.position[0] * GRID_SIZE
+   95 |         y = self.position[1] * GRID_SIZE
+  ...
+   98 | 
+   99 | class Game:
+  100 |     [41mdef[0m __init__(self):
+  101 |         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+  102 |         pygame.display.set_caption("Snake Game")
+  ...
+  106 |         self.reset_game()
+  107 | 
+  108 |     [41mdef[0m reset_game(self):
+  109 |         self.[42msnake[0m = Snake()
+  110 |         self.food = Food()
+  111 |         self.score = 0
+  ...
+  114 |         self.speed = 8  # FPS
+  115 | 
+  116 |     [41mdef[0m handle_events(self):
+  117 |         for event in pygame.event.get():
+  118 |             if event.type == pygame.QUIT:
+  ...
+  128 |                         self.paused = not self.paused
+  129 |                     elif event.key == pygame.K_UP or event.key == pygame.K_w:
+  130 |                         self.[42msnake[0m.change_direction(UP)
+  131 |                     elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+  132 |                         self.[42msnake[0m.change_direction(DOWN)
+  133 |                     elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+  134 |                         self.[42msnake[0m.change_direction(LEFT)
+  135 |                     elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+  136 |                         self.[42msnake[0m.change_direction(RIGHT)
+  137 |         return True
+  138 | 
+  139 |     [41mdef[0m update(self):
+  140 |         if self.game_over or self.paused:
+  141 |             return
+  142 | 
+  143 |         # Move [42msnake[0m
+  144 |         if not self.[42msnake[0m.move():
+  145 |             self.game_over = True
+  146 |             return
+  147 | 
+  148 |         # Check food collision
+  149 |         if self.[42msnake[0m.check_food_collision(self.food.position):
+  150 |             self.[42msnake[0m.grow_[42msnake[0m()
+  151 |             self.food.respawn(self.[42msnake[0m.body)
+  152 |             self.score += 10
+  153 |             self.speed = min(20, self.speed + 0.5)  # Increase speed gradually
+  154 | 
+  155 |     [41mdef[0m draw(self):
+  156 |         self.screen.fill(BLACK)
+  157 | 
+  ...
+  163 | 
+  164 |         # Draw game objects
+  165 |         self.[42msnake[0m.draw(self.screen)
+  166 |         self.food.draw(self.screen)
+  167 | 
+  ...
+  169 |         score_text = self.font.render(f"Score: {self.score}", True, WHITE)
+  170 |         speed_text = self.font.render(f"Speed: {self.speed:.1f}", True, WHITE)
+  171 |         length_text = self.font.render(f"Length: {len(self.[42msnake[0m.body)}", True, WHITE)
+  172 | 
+  173 |         self.screen.blit(score_text, (10, 10))
+  ...
+  213 |         pygame.display.flip()
+  214 | 
+  215 |     [41mdef[0m run(self):
+  216 |         running = True
+  217 |         while running:
+  ...
+  224 |         sys.exit()
+  225 | 
+  226 | [41mdef[0m main():
+  227 |     print("ð Welcome to Snake Game!")
+  228 |     print("Controls:")
+  229 |     print("  Arrow Keys or WASD: Move the [42msnake[0m")
+  230 |     print("  P: Pause/Resume game")
+  231 |     print("  R: Restart (when game over)")
+Found: 31
+</content>
+</search>
+<search path="/Users/agnos/Downloads/AGNOS/AGEditor_2/V2/TEST/snake_web.html">
+<content>
+  159 |         const tileCount = canvas.width / gridSize;
+  160 | 
+  161 |         let [42msnake[0m = [
+  162 |             {x: 10, y: 10}
+  163 |         ];
+  ...
+  181 | 
+  182 |         // Initialize high score
+  183 |         let highScore = localStorage.getItem('[42msnake[0mHighScore') || 0;
+  184 |         highScoreElement.textContent = highScore;
+  185 | 
+  ...
+  198 |             ctx.fillRect(0, 0, canvas.width, canvas.height);
+  199 | 
+  200 |             // Draw [42msnake[0m
+  201 |             ctx.fillStyle = difficulties[currentDifficulty].color;
+  202 |             [42msnake[0m.forEach((segment, index) => {
+  203 |                 if (index === 0) {
+  204 |                     // Draw head with slight glow
+  ...
+  239 |             if (!gameRunning || gamePaused) return;
+  240 | 
+  241 |             const head = {x: [42msnake[0m[0].x + dx, y: [42msnake[0m[0].y + dy};
+  242 | 
+  243 |             // Check wall collision
+  ...
+  248 | 
+  249 |             // Check self collision
+  250 |             for (let segment of [42msnake[0m) {
+  251 |                 if (head.x === segment.x && head.y === segment.y) {
+  252 |                     gameOver();
+  ...
+  255 |             }
+  256 | 
+  257 |             [42msnake[0m.unshift(head);
+  258 | 
+  259 |             // Check food collision
+  ...
+  270 |                 }
+  271 |             } else {
+  272 |                 [42msnake[0m.pop();
+  273 |             }
+  274 |         }
+  ...
+  284 |             if (score > highScore) {
+  285 |                 highScore = score;
+  286 |                 localStorage.setItem('[42msnake[0mHighScore', highScore);
+  287 |                 highScoreElement.textContent = highScore;
+  288 |                 newHighScoreElement.style.display = 'block';
+  ...
+  296 |         // Restart game
+  297 |         function restartGame() {
+  298 |             [42msnake[0m = [{x: 10, y: 10}];
+  299 |             dx = 0;
+  300 |             dy = 0;
+Found: 10
+</content>
+</search>
+<search path="/Users/agnos/Downloads/AGNOS/AGEditor_2/V2/TEST/snake_console.py">
+<content>
+    6 | 
+    7 | class ConsoleSnake:
+    8 |     [41mdef[0m __init__(self, width=20, height=15):
+    9 |         self.width = width
+   10 |         self.height = height
+   11 |         self.reset_game()
+   12 | 
+   13 |     [41mdef[0m reset_game(self):
+   14 |         self.[42msnake[0m = deque([(self.width//2, self.height//2)])
+   15 |         self.direction = (1, 0)  # Moving right
+   16 |         self.food = self.generate_food()
+  ...
+   18 |         self.game_over = False
+   19 | 
+   20 |     [41mdef[0m generate_food(self):
+   21 |         while True:
+   22 |             food = (random.randint(0, self.width-1), random.randint(0, self.height-1))
+   23 |             if food not in self.[42msnake[0m:
+   24 |                 return food
+   25 | 
+   26 |     [41mdef[0m move_[42msnake[0m(self):
+   27 |         if self.game_over:
+   28 |             return
+   29 | 
+   30 |         head_x, head_y = self.[42msnake[0m[0]
+   31 |         new_head = (head_x + self.direction[0], head_y + self.direction[1])
+   32 | 
+  ...
+   38 | 
+   39 |         # Check self collision
+   40 |         if new_head in self.[42msnake[0m:
+   41 |             self.game_over = True
+   42 |             return
+   43 | 
+   44 |         self.[42msnake[0m.appendleft(new_head)
+   45 | 
+   46 |         # Check food collision
+  ...
+   49 |             self.food = self.generate_food()
+   50 |         else:
+   51 |             self.[42msnake[0m.pop()
+   52 | 
+   53 |     [41mdef[0m change_direction(self, new_direction):
+   54 |         # Prevent reversing into self
+   55 |         if (self.direction[0] * -1, self.direction[1] * -1) != new_direction:
+   56 |             self.direction = new_direction
+   57 | 
+   58 |     [41mdef[0m draw(self):
+   59 |         # Clear screen
+   60 |         os.system('cls' if os.name == 'nt' else 'clear')
+  ...
+   66 |         board = [[' ' for _ in range(self.width)] for _ in range(self.height)]
+   67 | 
+   68 |         # Place [42msnake[0m
+   69 |         for i, (x, y) in enumerate(self.[42msnake[0m):
+   70 |             if i == 0:
+   71 |                 board[y][x] = 'O'  # Head
+  ...
+   86 |         # Print score and info
+   87 |         print(f"Score: {self.score}")
+   88 |         print(f"Length: {len(self.[42msnake[0m)}")
+   89 |         print(f"Food at: ({self.food[0]}, {self.food[1]})")
+   90 | 
+  ...
+   94 |             print("Press 'r' to restart or 'q' to quit")
+   95 | 
+   96 |     [41mdef[0m get_input(self):
+   97 |         if self.game_over:
+   98 |             choice = input().lower()
+  ...
+  120 |                 pass
+  121 | 
+  122 |     [41mdef[0m process_key(self, key):
+  123 |         if key == 'w' or key == 'arrow_up':
+  124 |             self.change_direction((0, -1))
+  ...
+  132 |             sys.exit()
+  133 | 
+  134 |     [41mdef[0m run(self):
+  135 |         print("ð Welcome to Console Snake!")
+  136 |         print("Use WASD or Arrow Keys to move")
+  ...
+  154 |                 self.draw()
+  155 |                 self.get_input()
+  156 |                 self.move_[42msnake[0m()
+  157 |                 time.sleep(0.2)  # Game speed
+  158 |         except KeyboardInterrupt:
+  ...
+  165 |                 pass
+  166 | 
+  167 | [41mdef[0m main():
+  168 |     game = ConsoleSnake()
+  169 |     game.run()
+Found: 20
+</content>
+</search>
+<search path="/Users/agnos/Downloads/AGNOS/AGEditor_2/V2/TEST/README.md">
+<content>
+    5 | ## Available Versions
+    6 | 
+    7 | ### 1. `[42msnake[0m_game.py` - Pygame Version (Recommended)
+    8 | A full-featured graphical version with:
+    9 | - ð® Smooth graphics and animations
+  ...
+   21 | **To run:**
+   22 | ```bash
+   23 | python [42msnake[0m_game.py
+   24 | ```
+   25 | 
+   26 | **Controls:**
+   27 | - Arrow Keys or WASD: Move [42msnake[0m
+   28 | - P: Pause/Resume
+   29 | - R: Restart (when game over)
+   30 | - Q: Quit
+   31 | 
+   32 | ### 2. `[42msnake[0m_console.py` - Console Version
+   33 | A terminal-based version that works in any console:
+   34 | - ð» Pure Python, no external dependencies
+  ...
+   39 | **To run:**
+   40 | ```bash
+   41 | python [42msnake[0m_console.py
+   42 | ```
+   43 | 
+   44 | **Controls:**
+   45 | - WASD or Arrow Keys: Move [42msnake[0m
+   46 | - Collect (*) food to grow
+   47 | - Don't hit walls or yourself!
+   48 | 
+   49 | ### 3. `[42msnake[0m_web.html` - Web Version (Coming Soon)
+   50 | A browser-based version that runs in any web browser.
+   51 | 
+  ...
+   62 | ## Tips for Playing
+   63 | 
+   64 | 1. **Plan your moves** - The [42msnake[0m gets longer, making tight spaces dangerous
+   65 | 2. **Use the walls strategically** - Sometimes you need to navigate close to edges
+   66 | 3. **Don't panic** - When the [42msnake[0m gets long, stay calm and think ahead
+   67 | 4. **Practice** - The more you play, the better you'll get!
+   68 | 
+  ...
+   87 | You can easily customize the games by editing the constants:
+   88 | 
+   89 | ### In [42msnake[0m_game.py:
+   90 | - `WINDOW_WIDTH` and `WINDOW_HEIGHT` - Screen size
+   91 | - `GRID_SIZE` - Size of each grid cell
+  ...
+   93 | - `speed` - Initial game speed
+   94 | 
+   95 | ### In [42msnake[0m_console.py:
+   96 | - `width` and `height` - Game board size
+   97 | - `time.sleep(0.2)` - Game speed (lower = faster)
+Found: 11
+</content>
+</search>
