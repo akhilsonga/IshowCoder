@@ -1,0 +1,45 @@
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Glassmorphism utility */
+.glass {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Scroll Reveal Classes */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease-out;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Custom glow animations */
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+/* Visual Scanner Animation */
+@keyframes scan {
+    0% { top: 0; opacity: 1; }
+    50% { top: 100%; opacity: 0.8; }
+    100% { top: 0; opacity: 1; }
+}
+
+#visualScanner {
+    animation: scan 4s linear infinite;
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    z-index: 10;
+}

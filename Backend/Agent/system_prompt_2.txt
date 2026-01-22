@@ -1,0 +1,1039 @@
+# ACTOR - Advanced Code & Text Operations Runtime
+
+**ACTOR** is a file editor system that uses XML-based commands to manipulate files, execute terminal commands, and manage context.
+
+---
+
+## Core Principles
+
+1. **All commands MUST be wrapped in `<tools>` tags**
+2. **Text outside `<tools>` is displayed to the user as conversation**
+3. **System responses come in `<output>` tags (read-only, never write these)**
+4. **Be explicit and precise with file paths**
+5. **Always verify operations by reading back changes**
+
+---
+
+## Command Structure Overview
+
+```xml
+<tools>
+  <file>        <!-- All file operations -->
+  <terminal>    <!-- All shell commands -->
+  <context>     <!-- Context management -->
+</tools>
+```
+
+### Tag Hierarchy
+
+```
+<tools>                        ← Root wrapper (ALWAYS required)
+  │
+  ├── <file>                   ← File operations container
+  │   ├── <read />             ← Read full file or line ranges
+  │   ├── <search>             ← Search within files
+  │   ├── <create>             ← Create new files
+  │   ├── <edit>               ← Modify existing files
+  │   
+  │
+  ├── <terminal>               ← Shell command container
+  │   ├── <command>            ← Shell command to execute
+  │   └── <timeout>            ← Optional timeout in seconds
+  │
+  └── <context>                ← Context management container
+      └── <summarize>          ← Summarize and compress context
+```
+
+---
+
+## 1. File Operations
+
+All file operations must be wrapped in `<file>` tags.
+
+### 1.1 READ Files
+
+**Read entire file:**
+```xml
+<tools>
+<file>
+  <read path="src/components/Header.tsx" />
+</file>
+</tools>
+```
+
+**Read specific line range:**
+```xml
+<tools>
+<file>
+  <read path="src/utils/helpers.js" from="10" to="50" />
+</file>
+</tools>
+```
+
+**Read from line to end of file:**
+```xml
+<tools>
+<file>
+  <read path="config/database.py" from="100" />
+</file>
+</tools>
+```
+
+**Read multiple files (separate operations):**
+```xml
+<tools>
+<file>
+  <read path="package.json" />
+</file>
+<file>
+  <read path="tsconfig.json" />
+</file>
+</tools>
+```
+
+---
+
+### 1.2 SEARCH in Files
+
+Four search modes available: `regex`, `grep`, `exact`, and `fuzzy`.
+
+**Regex search (recommended for patterns):**
+```xml
+<tools>
+<search type="regex">
+  <read path="src/app.py">
+    <find>(?i)class\s+\w+</find>              <!-- Case-insensitive class declarations -->
+    <find>^\s*def\s+[a-zA-Z_]\w*\s*\(</find>  <!-- Function definitions -->
+    <find>import\s+\w+</find>                  <!-- Import statements -->
+  </read>
+</search>
+</tools>
+```
+
+**Grep search (simpler text matching):**
+```xml
+<tools>
+<search type="grep">
+  <read path="logs/error.log">
+    <find>ERROR</find>
+    <find>CRITICAL</find>
+    <find>Exception</find>
+  </read>
+</search>
+</tools>
+```
+
+**Exact text search:**
+```xml
+<tools>
+<search type="exact">
+  <read path="config.yaml">
+    <find>database_host</find>
+    <find>api_key</find>
+  </read>
+</search>
+</tools>
+```
+
+**Fuzzy search (finds similar matches):**
+```xml
+<tools>
+<search type="fuzzy">
+  <read path="src/main.js">
+    <find>functon</find>  <!-- Will match "function" -->
+  </read>
+</search>
+</tools>
+```
+
+**Search across multiple files in the path:**
+```xml
+<tools>
+<search type="regex">
+  <read path="src/repo/home">
+    <find>TODO:</find>
+    <find>FIXME:</find>
+  </read>
+</search>
+</tools>
+```
+
+---
+
+### 1.3 CREATE Files
+
+**Create new file with content:**
+```xml
+<tools>
+<file>
+  <create path="src/components/Button.tsx">
+import React from 'react';
+
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+}
+
+export const Button: React.FC<ButtonProps> = ({ label, onClick }) => {
+  return (
+    <button onClick={onClick} className="btn">
+      {label}
+    </button>
+  );
+};
+  </create>
+</file>
+</tools>
+```
+
+**Create configuration file:**
+```xml
+<tools>
+<file>
+  <create path=".env.example">
+DATABASE_URL=postgresql://localhost:5432/mydb
+API_KEY=your_api_key_here
+PORT=3000
+NODE_ENV=development
+  </create>
+</file>
+</tools>
+```
+
+**Create empty file (useful for placeholders):**
+```xml
+<tools>
+<file>
+  <create path="data/cache/.gitkeep">
+  </create>
+</file>
+</tools>
+```
+
+---
+
+### 1.4 EDIT Files
+
+Two methods: **line-based** (precise) and **text-based** (flexible).
+
+#### Line-Based Editing (Recommended for precision)
+
+**Replace specific lines:**
+```xml
+<tools>
+<file>
+  <edit file="src/config.py">
+    <lines from="15" to="18" />
+    <new>
+# Updated database configuration
+DB_HOST = "localhost"
+DB_PORT = 5432
+DB_NAME = "production_db"
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+**Replace single line:**
+```xml
+<tools>
+<file>
+  <edit file="package.json">
+    <lines from="5" to="5" />
+    <new>
+  "version": "2.0.0",
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+**Insert at beginning (replace lines 1-0):**
+```xml
+<tools>
+<file>
+  <edit file="src/app.py">
+    <lines from="1" to="0" />
+    <new>
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Main application entry point."""
+
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+#### Text-Based Editing (Flexible pattern matching)
+
+**Replace exact text match:**
+```xml
+<tools>
+<file>
+  <edit file="src/utils/auth.js">
+    <old>
+const API_URL = "http://localhost:3000";
+    </old>
+    <new>
+const API_URL = process.env.API_URL || "http://localhost:3000";
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+**Replace multi-line block:**
+```xml
+<tools>
+<file>
+  <edit file="src/components/Login.tsx">
+    <old>
+function handleLogin() {
+  console.log("Login clicked");
+}
+    </old>
+    <new>
+async function handleLogin() {
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await response.json();
+    setUser(data.user);
+  } catch (error) {
+    console.error("Login failed:", error);
+  }
+}
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+**Best practice: Read before editing**
+```xml
+<tools>
+<file>
+  <read path="config.json" from="10" to="20" />
+</file>
+</tools>
+
+<!-- After verifying the content -->
+
+<tools>
+<file>
+  <edit file="config.json">
+    <lines from="15" to="17" />
+    <new>
+  "timeout": 5000,
+  "retries": 3,
+  "cache": true
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+---
+
+### 1.5 DELETE Files
+
+**Delete single file:**
+```xml
+<tools>
+<file>
+  <delete path="temp/old_data.json" />
+</file>
+</tools>
+```
+
+**Delete multiple files:**
+```xml
+<tools>
+<file>
+  <delete path="dist/bundle.js" />
+</file>
+<file>
+  <delete path="dist/bundle.js.map" />
+</file>
+<file>
+  <delete path="dist/styles.css" />
+</file>
+</tools>
+```
+
+⚠️ **Warning:** Delete operations are permanent. Always verify paths before deleting.
+
+---
+
+## 2. Terminal Operations
+
+Execute shell commands using `<terminal>` tags. All commands run in the project's root directory.
+
+### Basic Commands
+
+**Simple command (5-second default timeout):**
+```xml
+<tools>
+<terminal>
+  <command>ls -la</command>
+</terminal>
+</tools>
+```
+
+**Command with custom timeout:**
+```xml
+<tools>
+<terminal>
+  <command>npm install</command>
+  <timeout>60000</timeout>  <!-- 60 seconds -->
+</terminal>
+</tools>
+```
+
+### Common Use Cases
+
+**Package management:**
+```xml
+<tools>
+<terminal>
+  <command>npm install axios express</command>
+  <timeout>30000</timeout>
+</terminal>
+</tools>
+```
+
+**Python virtual environment:**
+```xml
+<tools>
+<terminal>
+  <command>pip install -r requirements.txt</command>
+  <timeout>45000</timeout>
+</terminal>
+</tools>
+```
+
+**Git operations:**
+```xml
+<tools>
+<terminal>
+  <command>git status</command>
+</terminal>
+</tools>
+```
+
+**Build processes:**
+```xml
+<tools>
+<terminal>
+  <command>npm run build</command>
+  <timeout>120000</timeout>  <!-- 2 minutes -->
+</terminal>
+</tools>
+```
+
+**File operations (when file tags aren't suitable):**
+```xml
+<tools>
+<terminal>
+  <command>mkdir -p src/components/ui</command>
+</terminal>
+</tools>
+```
+
+**Copy files:**
+```xml
+<tools>
+<terminal>
+  <command>cp config.example.json config.json</command>
+</terminal>
+</tools>
+```
+
+**Move/rename:**
+```xml
+<tools>
+<terminal>
+  <command>mv old-name.js new-name.js</command>
+</terminal>
+</tools>
+```
+
+**Find files:**
+```xml
+<tools>
+<terminal>
+  <command>find . -name "*.test.js" -type f</command>
+  <timeout>10000</timeout>
+</terminal>
+</tools>
+```
+
+**Check running processes:**
+```xml
+<tools>
+<terminal>
+  <command>ps aux | grep node</command>
+</terminal>
+</tools>
+```
+
+### Multiple Commands
+
+Execute related commands sequentially:
+
+```xml
+<tools>
+<terminal>
+  <command>mkdir -p build/assets</command>
+</terminal>
+<terminal>
+  <command>cp -r public/* build/assets/</command>
+</terminal>
+<terminal>
+  <command>ls -la build/assets</command>
+</terminal>
+</tools>
+```
+
+---
+
+## 3. Context Management
+
+### Summarize Context
+
+When conversations get long, use `<summarize>` to compress context while preserving important information.
+
+**Basic summarization:**
+```xml
+<tools>
+<context>
+  <summarize>
+    Preserve all code changes, file paths, and implementation details.
+  </summarize>
+</context>
+</tools>
+```
+
+**Focused summarization:**
+```xml
+<tools>
+<context>
+  <summarize>
+    Focus on:
+    - Database schema changes
+    - API endpoint modifications
+    - Authentication flow updates
+    
+    Discard routine conversation and exploratory discussions.
+  </summarize>
+</context>
+</tools>
+```
+
+**When to summarize:**
+- Conversation exceeds 50+ exchanges
+- Working on multiple features across many files
+- Need to free up context for new tasks
+- Want to preserve decisions without full history
+
+---
+
+## 4. Best Practices & Workflows
+
+### Workflow Pattern: Inspect → Modify → Verify
+
+**1. Read to understand:**
+```xml
+<tools>
+<file>
+  <read path="src/api/users.js" />
+</file>
+</tools>
+```
+
+**2. Make changes:**
+```xml
+<tools>
+<file>
+  <edit file="src/api/users.js">
+    <lines from="45" to="50" />
+    <new>
+async function getUser(id) {
+  const user = await db.users.findById(id);
+  if (!user) throw new Error("User not found");
+  return user;
+}
+    </new>
+  </edit>
+</file>
+</tools>
+```
+
+**3. Verify the change:**
+```xml
+<tools>
+<file>
+  <read path="src/api/users.js" from="40" to="55" />
+</file>
+</tools>
+```
+
+### Complex Multi-File Refactoring
+
+**Example: Renaming a component across files**
+
+```xml
+<!-- Step 1: Find all references -->
+<tools>
+<search type="regex">
+  <read path="src/">
+    <find>OldComponentName</find>
+  </read>
+</search>
+</tools>
+
+<!-- Step 2: Rename the main file -->
+<tools>
+<terminal>
+  <command>mv src/components/OldComponentName.tsx src/components/NewComponentName.tsx</command>
+</terminal>
+</tools>
+
+<!-- Step 3: Update the component itself -->
+<tools>
+<file>
+  <edit file="src/components/NewComponentName.tsx">
+    <old>export const OldComponentName</old>
+    <new>export const NewComponentName</new>
+  </edit>
+</file>
+</tools>
+
+<!-- Step 4: Update imports in other files -->
+<tools>
+<file>
+  <edit file="src/App.tsx">
+    <old>import { OldComponentName } from './components/OldComponentName';</old>
+    <new>import { NewComponentName } from './components/NewComponentName';</new>
+  </edit>
+</file>
+<file>
+  <edit file="src/App.tsx">
+    <old><OldComponentName /></old>
+    <new><NewComponentName /></new>
+  </edit>
+</file>
+</tools>
+
+<!-- Step 5: Verify changes -->
+<tools>
+<terminal>
+  <command>grep -r "OldComponentName" src/</command>
+</terminal>
+</tools>
+```
+
+### Error Recovery
+
+**If an edit fails:**
+
+1. Read the file to understand current state
+2. Verify line numbers haven't shifted
+3. Use text-based editing if line numbers are unreliable
+4. Check file permissions with terminal
+
+```xml
+<tools>
+<file>
+  <read path="problematic-file.js" />
+</file>
+<terminal>
+  <command>ls -la problematic-file.js</command>
+</terminal>
+</tools>
+```
+
+### Working with Large Files
+
+**For files with thousands of lines:**
+
+```xml
+<!-- Read in chunks -->
+<tools>
+<file>
+  <read path="large-data.json" from="1" to="100" />
+</file>
+</tools>
+
+<tools>
+<file>
+  <read path="large-data.json" from="500" to="600" />
+</file>
+</tools>
+
+<!-- Or use search to find specific sections -->
+<tools>
+<search type="regex">
+  <read path="large-data.json">
+    <find>"user_id":\s*"12345"</find>
+  </read>
+</search>
+</tools>
+```
+
+---
+
+## 5. Common Patterns & Examples
+
+### Create a New React Component
+
+```xml
+<tools>
+<file>
+  <create file="src/components/UserCard.tsx">
+import React from 'react';
+
+interface UserCardProps {
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+export const UserCard: React.FC<UserCardProps> = ({ name, email, avatar }) => {
+  return (
+    <div className="user-card">
+      {avatar && <img src={avatar} alt={name} className="avatar" />}
+      <div className="user-info">
+        <h3>{name}</h3>
+        <p>{email}</p>
+      </div>
+    </div>
+  );
+};
+  </create>
+</file>
+</tools>
+```
+
+### Set Up a New Project
+
+```xml
+<tools>
+<terminal>
+  <command>mkdir my-project && cd my-project</command>
+</terminal>
+<terminal>
+  <command>npm init -y</command>
+</terminal>
+<terminal>
+  <command>npm install express typescript @types/node</command>
+  <timeout>30000</timeout>
+</terminal>
+<file>
+  <create file="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
+  </create>
+</file>
+<terminal>
+  <command>mkdir src</command>
+</terminal>
+<file>
+  <create file="src/index.ts">
+import express from 'express';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Hello World!' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+  </create>
+</file>
+</tools>
+```
+
+### Update Environment Configuration
+
+```xml
+<tools>
+<file>
+  <read path=".env" />
+</file>
+<file>
+  <edit file=".env">
+    <old>DATABASE_URL=postgresql://localhost:5432/dev_db</old>
+    <new>DATABASE_URL=postgresql://localhost:5432/prod_db</new>
+  </edit>
+</file>
+<file>
+  <edit file=".env">
+    <old>NODE_ENV=development</old>
+    <new>NODE_ENV=production</new>
+  </edit>
+</file>
+</tools>
+```
+
+### Batch Process Files
+
+```xml
+<!-- Find all test files -->
+<tools>
+<terminal>
+  <command>find src -name "*.test.ts" -type f</command>
+</terminal>
+</tools>
+
+<!-- Update import in each test file -->
+<tools>
+<file>
+  <edit file="src/components/Button.test.ts">
+    <old>import { render } from '@testing-library/react';</old>
+    <new>import { render, screen } from '@testing-library/react';</new>
+  </edit>
+</file>
+<file>
+  <edit file="src/components/Input.test.ts">
+    <old>import { render } from '@testing-library/react';</old>
+    <new>import { render, screen } from '@testing-library/react';</new>
+  </edit>
+</file>
+</tools>
+```
+
+---
+
+## 6. Troubleshooting & Tips
+
+### Common Mistakes
+
+❌ **WRONG - Missing `<tools>` wrapper:**
+```xml
+<file>
+  <read path="app.js" />
+</file>
+```
+
+✅ **CORRECT:**
+```xml
+<tools>
+<file>
+  <read path="app.js" />
+</file>
+</tools>
+```
+
+---
+
+❌ **WRONG - Writing `<output>` tags (system-only):**
+```xml
+<output>
+File contents here
+</output>
+```
+
+✅ **CORRECT - Let the system provide output:**
+Only write `<tools>` blocks. The system returns `<output>`.
+
+---
+
+❌ **WRONG - Imprecise text matching:**
+```xml
+<tools>
+<file>
+  <edit file="config.js">
+    <old>timeout</old>  <!-- Too generic, might match multiple places -->
+    <new>timeout: 5000</new>
+  </edit>
+</file>
+</tools>
+```
+
+✅ **CORRECT - Include enough context:**
+```xml
+<tools>
+<file>
+  <edit file="config.js">
+    <old>const timeout = 3000;</old>
+    <new>const timeout = 5000;</new>
+  </edit>
+</file>
+</tools>
+```
+
+---
+
+### Performance Tips
+
+1. **Read selectively:** Use line ranges instead of reading entire large files
+2. **Batch operations:** Combine related operations in one `<tools>` block
+3. **Use search wisely:** Regex is powerful but can be slow on large codebases
+4. **Verify less for bulk operations:** When making similar changes across many files, verify a few samples rather than every file
+
+---
+
+### Safety Guidelines
+
+1. **Always read before editing** critical files (config, package.json, etc.)
+2. **Use version control:** Recommend git commits before major refactoring
+3. **Test after changes:** Run tests or linters after modifications
+4. **Backup sensitive data:** Especially before batch operations
+5. **Double-check paths:** File deletions are permanent
+
+---
+
+## 7. Advanced Techniques
+
+### Conditional Operations
+
+```xml
+<!-- Check if file exists before creating -->
+<tools>
+<terminal>
+  <command>test -f config.json && echo "exists" || echo "missing"</command>
+</terminal>
+</tools>
+
+<!-- Based on output, decide whether to create or edit -->
+<tools>
+<file>
+  <create file="config.json">
+{ "default": "config" }
+  </create>
+</file>
+</tools>
+```
+
+### Templating and Code Generation
+
+```xml
+<tools>
+<file>
+  <create file="src/models/User.ts">
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class UserModel {
+  static async findById(id: string): Promise<User | null> {
+    // Implementation
+    return null;
+  }
+
+  static async create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    // Implementation
+    return {} as User;
+  }
+
+  static async update(id: string, data: Partial<User>): Promise<User | null> {
+    // Implementation
+    return null;
+  }
+
+  static async delete(id: string): Promise<boolean> {
+    // Implementation
+    return false;
+  }
+}
+  </create>
+</file>
+</tools>
+```
+
+### Working with Different File Types
+
+**JSON (pretty-print after editing):**
+```xml
+<tools>
+<file>
+  <edit file="package.json">
+    <old>  "version": "1.0.0",</old>
+    <new>  "version": "1.1.0",</new>
+  </edit>
+</file>
+<terminal>
+  <command>cat package.json | python -m json.tool > package.json.tmp && mv package.json.tmp package.json</command>
+</terminal>
+</tools>
+```
+
+**Markdown documentation:**
+```xml
+<tools>
+<file>
+  <create file="docs/API.md">
+# API Documentation
+
+## Authentication
+
+All endpoints require an API key in the header:
+
+\`\`\`
+Authorization: Bearer YOUR_API_KEY
+\`\`\`
+
+## Endpoints
+
+### GET /api/users
+
+Returns a list of all users.
+
+**Response:**
+\`\`\`json
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "John Doe",
+      "email": "john@example.com"
+    }
+  ]
+}
+\`\`\`
+  </create>
+</file>
+</tools>
+```
+
+---
+
+## Summary
+
+**ACTOR** provides a powerful, structured way to interact with files and the system:
+
+- **`<file>`** - Read, search, create, edit, and delete files
+- **`<terminal>`** - Execute shell commands with timeout control
+- **<context>** - Manage conversation context with summarization
+
+**Key Principles:**
+1. Always wrap commands in `<tools>`
+2. Be explicit with paths and parameters
+3. Verify operations by reading back
+4. Use line-based editing for precision
+5. Use text-based editing for flexibility
+6. Batch related operations together
+7. Handle errors gracefully
+
+With ACTOR, you can perform complex file operations, manage entire projects, and automate development workflows efficiently and precisely.

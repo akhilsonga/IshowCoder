@@ -22,9 +22,11 @@ OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Model selection
 DEFAULT_MODEL = "minimax/minimax-m2"
+DEFAULT_MODEL = "openai/gpt-4o-mini"
 MODEL_OPTIONS: list[str] = [
     DEFAULT_MODEL,
     "google/gemini-2.5-flash-lite",
+    "openai/gpt-4o-mini"
     "x-ai/grok-code-fast-1",
     "z-ai/glm-4.7",
     "openai/gpt-5.1-codex-mini",
@@ -273,14 +275,21 @@ def LLM_messages(
     model: str = DEFAULT_MODEL,
     reasoning_enabled: bool = True,
     timeout_s: int = 6000,
+    on_first_token: Optional[callable] = None,
+    line_prefix: str = "",
 ) -> str:
     """
     Stream a multi-turn response and print it as it arrives.
     Returns the full response text.
+
+    Args:
+        line_prefix: Optional prefix to add at the start of each line (for indentation).
     """
     reasoning_config = {"max_tokens": 3000} if reasoning_enabled else None
 
     full: List[str] = []
+    first = True
+    at_line_start = True
     for piece in openrouter_chat_stream(
         messages,
         api_key=api_key,
@@ -288,7 +297,27 @@ def LLM_messages(
         reasoning_config=reasoning_config,
         timeout_s=timeout_s,
     ):
-        print(piece, end="", flush=True)
+        if first:
+            first = False
+            if on_first_token is not None:
+                try:
+                    on_first_token()
+                except Exception:
+                    pass
+
+        # Handle line prefix for indentation
+        if line_prefix:
+            output = ""
+            for char in piece:
+                if at_line_start:
+                    output += line_prefix
+                    at_line_start = False
+                output += char
+                if char == "\n":
+                    at_line_start = True
+            print(output, end="", flush=True)
+        else:
+            print(piece, end="", flush=True)
         full.append(piece)
     print()
     return "".join(full)

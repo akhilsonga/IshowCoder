@@ -1,0 +1,36 @@
+{
+  "created_at": "2026-01-20T18:12:32",
+  "updated_at": "2026-01-20T18:13:19",
+  "model": "google/gemini-3-flash-preview",
+  "director_chain": [
+    {
+      "role": "user",
+      "content": "/Users/agnos/Downloads/AGNOS/Tester/AGETESTER in this folder =inside test1 create beautfil html css js landing designer page for resume editor website\n\n\n---\nStats \nContext Tokens: 0/90k (0.0%) | Output Tokens: 0",
+      "created_at": "2026-01-20T18:13:17",
+      "token_estimate": 38,
+      "token_bucket": "38",
+      "tools_used_total": 0,
+      "tools_used": {
+        "file_read": 0,
+        "file_edit": 0,
+        "file_create": 0,
+        "terminal": 0,
+        "search": 0,
+        "signature": 0
+      }
+    }
+  ],
+  "actor_chain": [],
+  "tokens_prompted_total": 5544,
+  "tokens_generated_total": 0,
+  "tools_used_total": 0,
+  "tools_used": {
+    "file_read": 0,
+    "file_edit": 0,
+    "file_create": 0,
+    "terminal": 0,
+    "search": 0,
+    "signature": 0
+  },
+  "prompt_tokens_last": 5544
+}
